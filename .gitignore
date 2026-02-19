@@ -6,3 +6,9 @@ extract_ch8.py
 chapter8.txt
 
 *.pdf
+
+*.png
+
+*.gif
+
+*.pyc
