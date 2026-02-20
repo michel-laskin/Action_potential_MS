@@ -64,14 +64,17 @@ SEVERITY_NAMES = {1: 'Mild', 2: 'Moderate', 3: 'Severe'}
 MPL_STYLE = {
     'figure.facecolor': COLORS['bg'],
     'axes.facecolor': '#2a2a3d',
-    'axes.edgecolor': '#555577',
-    'axes.labelcolor': '#e0e0e0',
-    'xtick.color': '#bbbbdd',
-    'ytick.color': '#bbbbdd',
-    'text.color': '#e0e0e0',
+    'axes.edgecolor': '#333333',
+    'axes.labelcolor': '#000000',
+    'xtick.color': '#000000',
+    'ytick.color': '#000000',
+    'text.color': '#000000',
     'grid.color': '#3a3a55',
     'grid.alpha': 0.5,
 }
+
+TEXT_COLOR = '#000000'
+TICK_COLOR = '#000000'
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -178,20 +181,20 @@ class MSSimulatorGUI(QMainWindow):
                 margin-top: 14px;
                 padding: 12px 8px 8px 8px;
                 font-weight: bold;
-                color: {COLORS['accent']};
+                color: #000000;
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 12px;
                 padding: 0 6px;
             }}
-            QLabel {{ color: {COLORS['fg']}; }}
+            QLabel {{ color: #000000; }}
             QDoubleSpinBox, QSpinBox {{
                 background: {COLORS['card']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 4px;
                 padding: 3px 6px;
-                color: {COLORS['fg']};
+                color: #ffffff;
                 min-height: 22px;
             }}
             QPushButton#simulate {{
@@ -297,7 +300,7 @@ class MSSimulatorGUI(QMainWindow):
         grid.addWidget(widget, row, 1)
         if unit:
             u = QLabel(unit)
-            u.setStyleSheet(f"color: {COLORS['fg_dim']}; font-size: 11px;")
+            u.setStyleSheet("color: #000000; font-size: 11px;")
             grid.addWidget(u, row, 2)
 
     def _build_controls(self):
@@ -358,7 +361,7 @@ class MSSimulatorGUI(QMainWindow):
         vbox.addWidget(self.progress)
 
         self.status_label = QLabel("Ready")
-        self.status_label.setStyleSheet(f"color: {COLORS['fg_dim']}; font-size: 11px;")
+        self.status_label.setStyleSheet("color: #000000; font-size: 11px;")
         vbox.addWidget(self.status_label)
         self.ctrl_layout.addWidget(grp)
 
@@ -369,7 +372,7 @@ class MSSimulatorGUI(QMainWindow):
         info = QLabel("C = 20.0 µF/cm²\ng_leak = 0.5 mS/cm²\ng_Ca = 4.4 mS/cm²\n"
                        "g_K = 8.0 mS/cm²\nAxon: 30 cm, 500 pts")
         info.setFont(QFont("Consolas", 9))
-        info.setStyleSheet(f"color: {COLORS['fg_dim']};")
+        info.setStyleSheet("color: #000000;")
         vbox.addWidget(info)
         self.ctrl_layout.addWidget(grp)
 
@@ -491,6 +494,7 @@ class MSSimulatorGUI(QMainWindow):
             ax1.set_yticks([])
             ax1.set_title('Demyelination Lesion Map', fontsize=12, fontweight='bold')
             ax1.set_xlabel('Position along axon (cm)')
+            self._style_ax(ax1)
 
             # 2) C(x) profile
             ax2 = fig.add_subplot(gs[1])
@@ -501,6 +505,7 @@ class MSSimulatorGUI(QMainWindow):
             ax2.set_xlim(x[0], x[-1])
             ax2.set_title('Membrane Capacitance Profile', fontsize=10)
             ax2.grid(True, alpha=0.3)
+            self._style_ax(ax2)
 
             # 3) g_leak(x) profile
             ax3 = fig.add_subplot(gs[2])
@@ -511,6 +516,7 @@ class MSSimulatorGUI(QMainWindow):
             ax3.set_xlim(x[0], x[-1])
             ax3.set_title('Leak Conductance Profile', fontsize=10)
             ax3.grid(True, alpha=0.3)
+            self._style_ax(ax3)
 
         self.canvas_map['Lesion Map'].draw()
 
@@ -540,7 +546,11 @@ class MSSimulatorGUI(QMainWindow):
                 ax.set_xlabel('Position (cm)')
                 ax.set_ylabel('Time (ms)')
                 ax.set_title(label, fontsize=12, fontweight='bold')
-                fig.colorbar(im, ax=ax, label='V (mV)', shrink=0.85)
+                self._style_ax(ax)
+                cb = fig.colorbar(im, ax=ax, label='V (mV)', shrink=0.85)
+                cb.ax.yaxis.set_tick_params(color=TICK_COLOR)
+                cb.ax.yaxis.label.set_color(TEXT_COLOR)
+                plt.setp(cb.ax.yaxis.get_ticklabels(), color=TICK_COLOR)
 
         self.canvas_map['Heatmap'].draw()
 
@@ -568,8 +578,9 @@ class MSSimulatorGUI(QMainWindow):
                 ax.set_ylabel('V (mV)')
                 ax.set_title(label, fontsize=12, fontweight='bold')
                 ax.legend(fontsize=8, facecolor=COLORS['panel'],
-                          edgecolor=COLORS['border'])
+                          edgecolor=COLORS['border'], labelcolor=TEXT_COLOR)
                 ax.grid(True, alpha=0.3)
+                self._style_ax(ax)
 
         self.canvas_map['Spatial Snapshots'].draw()
 
@@ -597,12 +608,24 @@ class MSSimulatorGUI(QMainWindow):
                 ax.set_ylabel('V (mV)')
                 ax.set_title(label, fontsize=12, fontweight='bold')
                 ax.legend(fontsize=8, facecolor=COLORS['panel'],
-                          edgecolor=COLORS['border'])
+                          edgecolor=COLORS['border'], labelcolor=TEXT_COLOR)
                 ax.grid(True, alpha=0.3)
+                self._style_ax(ax)
 
         self.canvas_map['Temporal Traces'].draw()
 
     # ── Helpers ──
+
+    @staticmethod
+    def _style_ax(ax):
+        """Force bright text on every axis element for readability."""
+        ax.title.set_color(TEXT_COLOR)
+        ax.xaxis.label.set_color(TEXT_COLOR)
+        ax.yaxis.label.set_color(TEXT_COLOR)
+        ax.tick_params(axis='x', colors=TICK_COLOR, labelsize=9)
+        ax.tick_params(axis='y', colors=TICK_COLOR, labelsize=9)
+        for spine in ax.spines.values():
+            spine.set_edgecolor('#8888aa')
 
     @staticmethod
     def _contiguous_ranges(x, mask):
